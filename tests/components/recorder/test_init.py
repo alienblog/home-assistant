@@ -7,6 +7,7 @@ import pytest
 
 from homeassistant.core import callback
 from homeassistant.const import MATCH_ALL
+from homeassistant.setup import async_setup_component
 from homeassistant.components.recorder import Recorder
 from homeassistant.components.recorder.const import DATA_INSTANCE
 from homeassistant.components.recorder.util import session_scope
@@ -19,7 +20,7 @@ class TestRecorder(unittest.TestCase):
     """Test the recorder module."""
 
     def setUp(self):  # pylint: disable=invalid-name
-        """Setup things to be run when tests are started."""
+        """Set up things to be run when tests are started."""
         self.hass = get_test_home_assistant()
         init_recorder_component(self.hass)
         self.hass.start()
@@ -42,6 +43,7 @@ class TestRecorder(unittest.TestCase):
         with session_scope(hass=self.hass) as session:
             db_states = list(session.query(States))
             assert len(db_states) == 1
+            assert db_states[0].event_id > 0
             state = db_states[0].to_native()
 
         assert state == self.hass.states.get(entity_id)
@@ -91,7 +93,7 @@ def hass_recorder():
     hass = get_test_home_assistant()
 
     def setup_recorder(config=None):
-        """Setup with params."""
+        """Set up with params."""
         init_recorder_component(hass, config)
         hass.start()
         hass.block_till_done()
@@ -195,9 +197,28 @@ def test_recorder_setup_failure():
     with patch.object(Recorder, '_setup_connection') as setup, \
             patch('homeassistant.components.recorder.time.sleep'):
         setup.side_effect = ImportError("driver not found")
-        rec = Recorder(
-            hass, purge_days=0, uri='sqlite://', include={}, exclude={})
+        rec = Recorder(hass, keep_days=7, purge_interval=2,
+                       uri='sqlite://', include={}, exclude={})
         rec.start()
         rec.join()
 
     hass.stop()
+
+
+async def test_defaults_set(hass):
+    """Test the config defaults are set."""
+    recorder_config = None
+
+    async def mock_setup(hass, config):
+        """Mock setup."""
+        nonlocal recorder_config
+        recorder_config = config['recorder']
+        return True
+
+    with patch('homeassistant.components.recorder.async_setup',
+               side_effect=mock_setup):
+        assert await async_setup_component(hass, 'history', {})
+
+    assert recorder_config is not None
+    assert recorder_config['purge_keep_days'] == 10
+    assert recorder_config['purge_interval'] == 1

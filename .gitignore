@@ -1,4 +1,5 @@
 config/*
+config2/*
 
 tests/testing_config/deps
 tests/testing_config/home-assistant.log
@@ -16,9 +17,12 @@ Icon
 # Thumbnails
 ._*
 
+# IntelliJ IDEA
 .idea
+*.iml
 
 # pytest
+.pytest_cache
 .cache
 
 # GITHUB Proposed Python stuff:
@@ -52,6 +56,7 @@ pip-log.txt
 .tox
 nosetests.xml
 htmlcov/
+test-reports/
 
 # Translations
 *.mo
@@ -73,11 +78,14 @@ pyvenv.cfg
 pip-selfcheck.json
 venv
 .venv
+Pipfile*
+share/*
+Scripts/
 
 # vimmy stuff
 *.swp
 *.swo
-
+tags
 ctags.tmp
 
 # vagrant stuff
@@ -87,9 +95,22 @@ virtualization/vagrant/config
 
 # Visual Studio Code
 .vscode
+.devcontainer
 
 # Built docs
 docs/build
 
 # Windows Explorer
 desktop.ini
+/home-assistant.pyproj
+/home-assistant.sln
+/.vs/*
+
+# mypy
+/.mypy_cache/*
+
+# Secrets
+.lokalise_token
+
+# monkeytype
+monkeytype.sqlite3
